@@ -304,7 +304,7 @@ async function cloudSave(){
 async function cloudLoad(force){
   setSync('☁️ mengambil…');
   try{
-    const r=await fetch(SB_URL+'/rest/v1/'+SB_TBL+'?id=eq.1&select=doc&t='+Date.now(),
+    const r=await fetch(SB_URL+'/rest/v1/'+SB_TBL+'?id=eq.1&select=doc',
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     if(!r.ok)throw new Error(await r.text());
     const arr=await r.json();
