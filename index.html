@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokoKusenPintu — Segera</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at top,#1a2634,#0d141d 70%);font-family:'Plus Jakarta Sans',sans-serif;color:#fff;padding:24px}
+.card{text-align:center;max-width:400px;width:100%;padding:44px 30px;border-radius:22px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px)}
+.lock{width:70px;height:70px;margin:0 auto 18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#ffb300,#ff6b9d);font-size:32px}
+h1{font-size:22px;font-weight:800;margin-bottom:8px}
+p{font-size:13.5px;color:#9fb4c8;margin-bottom:24px;line-height:1.6}
+input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(0,0,0,.3);color:#fff;font-size:15px;font-family:inherit;text-align:center;outline:none;margin-bottom:12px}
+input:focus{border-color:#ffb300}
+button{width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:800;font-family:inherit;
+  color:#12263f;background:linear-gradient(135deg,#ffd54a,#ffb300)}
+.err{color:#ff8a8a;font-size:12.5px;margin-top:10px;min-height:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="lock">🔒</div>
+  <h1>TokoKusenPintu</h1>
+  <p>Halaman ini sedang diisi ulang.<br>Masukkan kata sandi untuk melanjutkan.</p>
+  <input type="password" id="pw" placeholder="Kata sandi" autocomplete="off">
+  <button onclick="buka()">Masuk</button>
+  <div class="err" id="err"></div>
+</div>
+<script>
+async function sha256(t){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function buka(){
+  if(await sha256(document.getElementById('pw').value)==='8983ee570379fd290b174487885737b384d187d605a02f16b9a8b04bb52ea8b0'){
+    sessionStorage.setItem('oktoko','1');location.href='toko.html';
+  }else{document.getElementById('err').textContent='Kata sandi salah.';}
+}
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')buka()});
+if(sessionStorage.getItem('oktoko')==='1')location.replace('toko.html');
+</script>
+</body>
+</html>

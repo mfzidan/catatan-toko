@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tangkap Koin! 🪙</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{height:100vh;overflow:hidden;background:linear-gradient(160deg,#0f2027,#203a43,#2c5364);
+  font-family:'Plus Jakarta Sans',sans-serif;color:#fff;display:flex;flex-direction:column}
+.hud{display:flex;justify-content:space-between;padding:14px 20px;font-weight:800;font-size:18px;
+  background:rgba(0,0,0,.25);backdrop-filter:blur(8px);z-index:10}
+.hud .score b{color:#ffd54a}.hud .best{color:#9fd6ff}
+.hud .time{color:#ff8a8a}
+#board{position:relative;flex:1;overflow:hidden;cursor:crosshair}
+.coin{position:absolute;width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffe27a,#ffb300 60%,#c68400);
+  box-shadow:0 4px 14px rgba(0,0,0,.4),inset 0 -4px 8px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#8a5a00;
+  animation:pop .25s ease;cursor:pointer}
+.coin.bomb{background:radial-gradient(circle at 35% 30%,#6b7280,#374151 60%,#1f2937);color:#fca5a5}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.float{position:absolute;font-weight:800;pointer-events:none;animation:up .7s ease forwards}
+@keyframes up{to{transform:translateY(-60px);opacity:0}}
+.overlay{position:absolute;inset:0;background:rgba(5,15,25,.82);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:20}
+.overlay h1{font-size:34px;font-weight:800;margin-bottom:8px}
+.overlay p{color:#bcd7e8;margin-bottom:22px;line-height:1.6}
+.btn{border:none;cursor:pointer;padding:15px 44px;border-radius:999px;font-size:17px;font-weight:800;font-family:inherit;
+  color:#12263f;background:linear-gradient(135deg,#ffd54a,#ffb300);box-shadow:0 8px 24px rgba(255,180,0,.4);transition:transform .15s}
+.btn:active{transform:scale(.95)}
+.hidden{display:none}
+#finalScore{font-size:52px;font-weight:800;color:#ffd54a;margin:6px 0 2px}
+</style>
+</head>
+<body>
+<div class="hud">
+  <div class="score">🪙 <b id="score">0</b></div>
+  <div class="time">⏱ <span id="time">30</span>s</div>
+  <div class="best">🏆 <span id="best">0</span></div>
+</div>
+<div id="board">
+  <div class="overlay" id="startScreen">
+    <h1>Tangkap Koin! 🪙</h1>
+    <p>Klik koin emas = +10 poin 💰<br>Hindari bom 💣 = -15 poin<br>30 detik — kejar skor tertinggi!</p>
+    <button class="btn" id="startBtn">MULAI ▶</button>
+  </div>
+  <div class="overlay hidden" id="endScreen">
+    <h1>Waktu Habis!</h1>
+    <div id="finalScore">0</div>
+    <p id="endMsg">Skor kamu</p>
+    <button class="btn" id="againBtn">MAIN LAGI 🔁</button>
+  </div>
+</div>
+<script>
+const board=document.getElementById('board');
+const scoreEl=document.getElementById('score'), timeEl=document.getElementById('time'), bestEl=document.getElementById('best');
+let score=0, time=30, best=+(localStorage.getItem('coinBest')||0), spawnTimer=null, tickTimer=null, playing=false;
+bestEl.textContent=best;
+
+function spawn(){
+  if(!playing) return;
+  const bomb=Math.random()<0.25;
+  const c=document.createElement('div');
+  c.className='coin'+(bomb?' bomb':'');
+  c.textContent=bomb?'💥':'🪙';
+  const w=board.clientWidth,h=board.clientHeight;
+  c.style.left=Math.random()*(w-60)+6+'px';
+  c.style.top=Math.random()*(h-60)+6+'px';
+  const life=setTimeout(()=>{c.remove()},1400);
+  c.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    if(!playing) return;
+    clearTimeout(life);
+    score+=bomb?-15:10;
+    if(score<0)score=0;
+    scoreEl.textContent=score;
+    const f=document.createElement('div');
+    f.className='float';f.style.left=e.clientX-6+'px';f.style.top=e.clientY-30+'px';
+    f.style.color=bomb?'#ff6b6b':'#ffd54a';f.textContent=bomb?'-15':'+10';
+    board.appendChild(f);setTimeout(()=>f.remove(),700);
+    c.remove();
+  });
+  board.appendChild(c);
+}
+function start(){
+  score=0;time=30;playing=true;
+  scoreEl.textContent=0;timeEl.textContent=30;
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  spawnTimer=setInterval(spawn,520);
+  tickTimer=setInterval(()=>{
+    time--;timeEl.textContent=time;
+    if(time<=0) end();
+  },1000);
+}
+function end(){
+  playing=false;
+  clearInterval(spawnTimer);clearInterval(tickTimer);
+  board.querySelectorAll('.coin').forEach(c=>c.remove());
+  document.getElementById('finalScore').textContent=score;
+  let msg='Coba lagi, kamu pasti bisa lebih tinggi! 💪';
+  if(score>=300) msg='LUAR BIASA! Kamu master koin! 🏆';
+  else if(score>=200) msg='Keren banget! 👏';
+  else if(score>=100) msg='Lumayan! Masih bisa naik 😎';
+  document.getElementById('endMsg').textContent=msg+' (Rekor: '+best+')';
+  if(score>best){best=score;localStorage.setItem('coinBest',best);bestEl.textContent=best;
+    document.getElementById('endMsg').textContent='🎉 REKOR BARU! '+msg;}
+  document.getElementById('endScreen').classList.remove('hidden');
+}
+document.getElementById('startBtn').addEventListener('click',start);
+document.getElementById('againBtn').addEventListener('click',start);
+</script>
+</body>
+</html>
