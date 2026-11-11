@@ -143,7 +143,7 @@ main{padding:14px 16px}
    <label>Sumber Data</label>
    <select id="fSumber"><option>FB Gratis</option><option>FB Ads</option><option>TikTok</option><option>Google/Maps</option><option>Rekomendasi</option><option>Langsung/Walk-in</option></select>
    <label>Status</label>
-   <select id="fStatus"><option value="tanya">💭 Tanya-tanya</option><option value="nego">💰 Nego</option><option value="jadi">✅ Jadi Beli</option><option value="batal">✖️ Batal</option></select>
+   <select id="fStatus"><option value="jadi">✅ Jadi Beli</option><option value="tidak">✖️ Tidak Jadi</option></select>
    <label>Tanggal</label><input id="fTgl" type="date">
 <label>Produk Diminati</label><input id="fProduk" placeholder="mis. Kusen 70x180">
    <label>Faktor PENYEBAB beli <small>(pilih semua yang cocok)</small></label>
@@ -162,10 +162,10 @@ const SB_KEY='sb_publishable_5SBOrAbFkJ01nf8FuEgpsQ_LaGFpVe9';
 const SB_TBL='leads_data';
 const KEY='crm_leads_v1';
 let leads=[];try{leads=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
-leads=leads.map(d=>d.status==='serius'?{...d,status:'nego'}:d);
+leads=leads.map(d=>d.status==='jadi'?d:{...d,status:'tidak'});
 let editId=null,filter='semua',beliSel=[],tidakSel=[],charts={};
 
-const ST={tanya:{l:'💭 Tanya-tanya',c:'#93A5C8',i:'chat'},nego:{l:'💰 Nego',c:'#FFB020',i:'coins'},jadi:{l:'✅ Jadi Beli',c:'#10E08C',i:'check'},batal:{l:'✖️ Batal',c:'#FF5C73',i:'x'}};
+const ST={jadi:{l:'✅ Jadi Beli',c:'#10E08C',i:'check'},tidak:{l:'✖️ Tidak Jadi',c:'#FF5C73',i:'x'}};
 const FAK_BELI=['Harga murah','Bisa custom','DP fleksibel','Rekomendasi kenal','Komunikasi cepat','Kualitas sample','Locasi dekat'];
 const FAK_TIDAK=['Jauh/susah cek bahan','Butuh cepat (stok kosong)','Nawar sangat murah','Tanya keluarga dulu','Ragu kualitas/no garansi','Pilih kompetitor','Hilang/tidak follow-up'];
 
@@ -194,7 +194,7 @@ async function cloudLoad(){
     const r=await fetch(SB_URL+'/rest/v1/'+SB_TBL+'?id=eq.1&select=doc',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     if(!r.ok)throw 0;
     const arr=await r.json();
-    if(arr.length&&arr[0].doc&&arr[0].doc.leads){leads=arr[0].doc.leads.map(d=>d.status==='serius'?{...d,status:'nego'}:d);localStorage.setItem(KEY,JSON.stringify(leads));renderAll();}
+    if(arr.length&&arr[0].doc&&arr[0].doc.leads){leads=arr[0].doc.leads.map(d=>d.status==='jadi'?d:{...d,status:'tidak'});localStorage.setItem(KEY,JSON.stringify(leads));renderAll();}
     setSync('☁️ sinkron — '+leads.length+' calon');
   }catch(e){setSync('⚠️ ambil gagal — cek internet');}
 }
@@ -228,7 +228,7 @@ function bukaForm(id){
     fNama.value=d.nama;fWa.value=d.wa;fSumber.value=d.sumber;fStatus.value=d.status;
     fProduk.value=d.produk||'';fNote.value=d.note||'';fTgl.value=d.tgl||'';beliSel=d.beli||[];tidakSel=d.tidak||[];
     document.getElementById('mTitle').textContent='✏️ Edit Calon';
-  }else{fNama.value='';fWa.value='';fSumber.value='FB Gratis';fStatus.value='tanya';fProduk.value='';fNote.value='';fTgl.value=new Date().toISOString().slice(0,10);
+  }else{fNama.value='';fWa.value='';fSumber.value='FB Gratis';fStatus.value='jadi';fProduk.value='';fNote.value='';fTgl.value=new Date().toISOString().slice(0,10);
     document.getElementById('mTitle').textContent='＋ Calon Pembeli';}
   chipHtml(FAK_BELI,beliSel,'fBeliChips','b');
   chipHtml(FAK_TIDAK,tidakSel,'fTidakChips','t');
@@ -246,9 +246,8 @@ function simpan(){
 }
 function hapus(id){if(confirm('Hapus calon ini?')){leads=leads.filter(x=>x.id!==id);localStorage.setItem(KEY,JSON.stringify(leads));cloudSave();renderAll();}}
 function gantiStatus(id){
-  const alur=['tanya','nego','jadi','batal'];
   const d=leads.find(x=>x.id===id);
-  d.status=alur[(alur.indexOf(d.status)+1)%alur.length];
+  d.status=d.status==='jadi'?'tidak':'jadi';
   localStorage.setItem(KEY,JSON.stringify(leads));cloudSave();renderAll();
 }
 
@@ -256,7 +255,7 @@ function gantiStatus(id){
 function renderAll(){renderList();if(document.getElementById('sGrafik').classList.contains('show'))renderGrafik();}
 function renderList(){
   const f=document.getElementById('filter');
-  f.innerHTML=['semua','tanya','nego','jadi','batal'].map(s=>
+  f.innerHTML=['semua','jadi','tidak'].map(s=>
     '<div class="chip'+(filter===s?' on':'')+'" onclick="filter=\''+s+'\';renderList()">'+(s==='semua'?'Semua':ST[s].l)+'</div>').join('');
   let arr=filter==='semua'?leads:leads.filter(x=>x.status===filter);
   arr=arr.slice().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||''));
@@ -283,27 +282,27 @@ function renderList(){
 function renderGrafik(){
   // KPI
   const tot=leads.length, jadi=leads.filter(x=>x.status==='jadi').length;
-  const batal=leads.filter(x=>x.status==='batal').length;
-  const aktif=leads.filter(x=>['tanya','serius','nego'].includes(x.status)).length;
+  const tidak=leads.filter(x=>x.status==='tidak').length;
   const conv=tot?Math.round(jadi/tot*100):0;
   const IC_K={
 us:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 ck:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>',
 lp:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-pc:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>'};
+pc:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>',
+x:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'};
 document.getElementById('kpis').innerHTML=
     '<div class="kpi b"><div class="ki" style="color:#8B9CFF;background:rgba(99,102,241,.15)">'+IC_K.us+'</div><div class="n">'+tot+'</div><div class="l">Total Calon</div></div>'+
     '<div class="kpi g"><div class="ki" style="color:var(--green);background:rgba(16,224,140,.15)">'+IC_K.ck+'</div><div class="n">'+jadi+'</div><div class="l">Jadi Beli</div></div>'+
-    '<div class="kpi a"><div class="ki" style="color:var(--amber);background:rgba(255,176,32,.15)">'+IC_K.lp+'</div><div class="n">'+aktif+'</div><div class="l">Masih Proses</div></div>'+
+    '<div class="kpi a"><div class="ki" style="color:var(--red);background:rgba(255,92,115,.15)">'+IC_K.x+'</div><div class="n">'+tidak+'</div><div class="l">Tidak Jadi</div></div>'+
     '<div class="kpi p"><div class="ki" style="color:var(--cyan);background:rgba(42,212,255,.15)">'+IC_K.pc+'</div><div class="n">'+conv+'%</div><div class="l">Konversi</div></div>';
 
   // funnel
-  const order=['tanya','nego','jadi'];
+  const order=['jadi','tidak'];
   const cnt=order.map(s=>leads.filter(x=>x.status===s).length);
   const cf=document.getElementById('chFunnel');
   if(charts.f)charts.f.destroy();
   charts.f=new Chart(cf,{type:'bar',data:{labels:order.map(s=>ST[s].l),
-    datasets:[{data:cnt,backgroundColor:['#93A5C8','#FFB020','#10E08C'],borderRadius:10}]},
+    datasets:[{data:cnt,backgroundColor:['#10E08C','#FF5C73'],borderRadius:10}]},
     options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+' calon'}}},
     scales:{x:{grid:{color:'#26314B'},ticks:{color:'#8DA0C0',precision:0}},y:{grid:{display:false},ticks:{color:'#EAF0FA',font:{weight:700}}}}}});
 
@@ -327,23 +326,26 @@ document.getElementById('kpis').innerHTML=
     '<div class="frow"><div class="fl">'+o.f+'</div><div class="fb"><i style="width:'+o.p+'%;background:linear-gradient(90deg,#10E08C,#2AD4FF)"></i></div><div class="fp">'+o.p+'%</div></div>').join('');
 
   // faktor tidak %
-  const nolist=leads.filter(x=>x.status==='batal'||x.status==='tanya');
-  const ft=FAK_TIDAK.map(f=>({f,p:nolist.length?Math.round(leads.filter(x=>(x.status==='batal'||x.status==='tanya')&&x.tidak&&x.tidak.includes(f)).length/nolist.length*100):0}))
+  const nolist=leads.filter(x=>x.status==='tidak');
+  const ft=FAK_TIDAK.map(f=>({f,p:nolist.length?Math.round(leads.filter(x=>x.status==='tidak'&&x.tidak&&x.tidak.includes(f)).length/nolist.length*100):0}))
     .sort((a,b)=>b.p-a.p);
   document.getElementById('fTidak').innerHTML=ft.map(o=>
     '<div class="frow"><div class="fl">'+o.f+'</div><div class="fb"><i style="width:'+o.p+'%;background:linear-gradient(90deg,#FF5C73,#FFB020)"></i></div><div class="fp">'+o.p+'%</div></div>').join('');
 
   // tren bulanan
+  const NAMA_B=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const months={};
   leads.forEach(d=>{const m=(d.tgl||'').slice(0,7);if(m){months[m]=months[m]||{t:0,j:0};months[m].t++;if(d.status==='jadi')months[m].j++;}});
   const ms=Object.keys(months).sort();
+  const labels=ms.map(m=>{const[y,mo]=m.split('-');return NAMA_B[+mo-1]+' '+y;});
   const ct=document.getElementById('chTren');
   if(charts.t)charts.t.destroy();
-  charts.t=new Chart(ct,{type:'line',data:{labels:ms,datasets:[
+  charts.t=new Chart(ct,{type:'line',data:{labels,datasets:[
       {label:'Calon masuk',data:ms.map(m=>months[m].t),borderColor:'#8B9CFF',backgroundColor:'rgba(99,102,241,.18)',fill:true,tension:.4,pointRadius:4},
-      {label:'Jadi beli',data:ms.map(m=>months[m].j),borderColor:'#10E08C',backgroundColor:'rgba(16,224,140,.15)',fill:true,tension:.4,pointRadius:4}]},
-    options:{plugins:{legend:{labels:{color:'#8DA0C0',boxWidth:12}}},
-    scales:{x:{grid:{display:false},ticks:{color:'#EAF0FA'}},y:{grid:{color:'#26314B'},ticks:{color:'#8DA0C0',precision:0},beginAtZero:true}}}});
+      {label:'Jadi beli',data:ms.map(m=>months[m].j),borderColor:'#10E08C',backgroundColor:'rgba(16,224,140,.15)',fill:true,tension:.4,pointRadius:4},
+      {label:'Tidak jadi',data:ms.map(m=>months[m].t-months[m].j),borderColor:'#FF5C73',backgroundColor:'rgba(255,92,115,.12)',fill:true,tension:.4,pointRadius:4,borderDash:[6,4]}]},
+    options:{plugins:{legend:{labels:{color:'#93A5C8',boxWidth:12}},tooltip:{callbacks:{title:it=>it[0].label}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#F1F5FD'}},y:{grid:{color:'#26314B'},ticks:{color:'#93A5C8',precision:0},beginAtZero:true}}}});
 }
 
 renderList();
