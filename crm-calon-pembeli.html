@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Calon Pembeli — TokoKusenPintu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#070B14;--card:#101827;--card2:#182236;--line:#2A3650;--tx:#F1F5FD;--mut:#93A5C8;
+--blue:#6366F1;--blue2:#8B5CF6;--green:#10E08C;--amber:#FFB020;--red:#FF5C73;--cyan:#2AD4FF;--pink:#F472B6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Sora','Outfit',sans-serif;background:radial-gradient(1200px 600px at 80% -10%,#1a2b4d 0%,var(--bg) 55%);color:var(--tx);min-height:100vh;padding-bottom:90px}
+header{padding:20px 18px 8px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:19px;font-weight:800;letter-spacing:.2px}
+.sub{font-size:12px;color:var(--mut);margin-top:2px}
+.sync{font-size:11px;color:var(--mut);text-align:right}
+.sync .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;box-shadow:0 0 8px var(--green)}
+.tabs{display:flex;gap:8px;padding:14px 16px 0}
+.tabs button{flex:1;padding:11px;border:none;border-radius:14px;background:var(--card);color:var(--mut);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid var(--line)}
+.tabs button.on{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 6px 20px rgba(99,102,241,.45)}
+main{padding:14px 16px}
+.sec{display:none}
+.sec.show{display:block}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:linear-gradient(160deg,var(--card),#0D1420);border:1px solid var(--line);border-radius:18px;padding:14px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;right:-20px;top:-20px;width:70px;height:70px;border-radius:50%;background:rgba(99,102,241,.08)}
+.kpi .ki{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.kpi .n{font-size:24px;font-weight:800}
+.kpi .l{font-size:11px;color:var(--mut);margin-top:2px}
+.kpi.g .n{color:var(--green)} .kpi.b .n{color:#8B9CFF} .kpi.a .n{color:var(--amber)} .kpi.p .n{color:var(--cyan)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.panel h3{font-size:14px;font-weight:800;margin-bottom:4px}
+.panel .hint{font-size:11px;color:var(--mut);margin-bottom:10px}
+.charts{display:flex;flex-direction:column;gap:14px}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,#556)}
+.card h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.badge{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px}
+.wa{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:#25D366;text-decoration:none;font-weight:700;background:rgba(37,211,102,.12);padding:6px 12px;border-radius:10px}
+.meta{font-size:11.5px;color:var(--mut);margin-top:6px}
+.meta b{color:var(--tx)}
+.note{font-size:12px;color:var(--mut);margin-top:6px;font-style:italic}
+.acts{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.mini{border:1px solid var(--line);background:var(--card2);border-radius:9px;padding:6px 9px;cursor:pointer;font-size:13px;color:var(--tx)}
+.mini.del{color:var(--red)}
+.fab{position:fixed;bottom:22px;right:18px;width:58px;height:58px;border:none;border-radius:50%;font-size:26px;color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue2));box-shadow:0 10px 30px rgba(99,102,241,.55);cursor:pointer;z-index:50}
+.filter{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px}
+.chip{padding:7px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--card);border:1px solid var(--line);color:var(--mut);cursor:pointer}
+.chip.on{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent}
+.empty{text-align:center;color:var(--mut);padding:44px 20px;font-size:13.5px}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(4,8,18,.6);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;z-index:99}
+.modal.show{display:flex}
+.mbox{background:var(--card2);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92vh;overflow:auto;padding-bottom:20px}
+@media(min-width:640px){.modal{align-items:center}.mbox{border-radius:20px}}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);font-weight:800}
+.mclose{border:none;background:var(--card);color:var(--tx);width:30px;height:30px;border-radius:9px;cursor:pointer}
+.mbody{padding:14px 18px;display:flex;flex-direction:column;gap:7px}
+.mbody label{font-size:11px;color:var(--mut);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-top:6px}
+.mbody input,.mbody select,.mbody textarea{padding:12px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;background:var(--card);color:var(--tx)}
+.mbody input:focus,.mbody select:focus,.mbody textarea:focus{outline:none;border-color:var(--blue)}
+.btnsave{margin-top:14px;padding:13px;border:none;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(99,102,241,.4)}
+/* faktor bar */
+.frow{display:flex;align-items:center;gap:10px;margin:8px 0}
+.frow .fl{flex:1;font-size:12.5px}
+.frow .fb{height:9px;border-radius:99px;background:var(--card2);flex:1.6;overflow:hidden}
+.frow .fb i{display:block;height:100%;border-radius:99px}
+.frow .fp{font-size:11.5px;color:var(--mut);width:38px;text-align:right;font-weight:700}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}.charts{flex-direction:row}.charts .panel{flex:1}.list{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📞 CRM Calon Pembeli</h1>
+    <div class="sub">TokoKusenPintu — analisa konversi &amp; faktor keputusan</div>
+  </div>
+  <div class="sync" style="display:flex;align-items:center;gap:10px">
+    <button onclick="exportXls()" style="border:1px solid var(--line);background:var(--card);color:var(--green);font-weight:800;font-size:12px;padding:8px 12px;border-radius:10px;cursor:pointer;font-family:inherit">⬇️ Excel</button>
+    <div><span class="dot"></span><span id="syncInfo">memuat…</span></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="on" id="tData" onclick="tab('data')">🗂 Data Calon</button>
+  <button id="tGrafik" onclick="tab('grafik')">📊 Grafik & Analisa</button>
+</div>
+
+<!-- ============ TAB DATA ============ -->
+<div class="sec show" id="sData">
+  <div class="filter" id="filter"></div>
+  <main style="padding-top:0"><div class="list" id="list"></div></main>
+</div>
+
+<!-- ============ TAB GRAFIK ============ -->
+<div class="sec" id="sGrafik">
+  <main>
+    <div class="kpis" id="kpis"></div>
+    <div class="charts">
+      <div class="panel">
+        <h3>🎯 Alur Konversi</h3>
+        <div class="hint">dari tanya-tanya sampai jadi beli</div>
+        <canvas id="chFunnel" height="220"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📢 Kualitas Sumber Data</h3>
+        <div class="hint">jadi beli per sumber (% di atas bar)</div>
+        <canvas id="chSumber" height="220"></canvas>
+      </div>
+    </div>
+    <div class="charts" style="margin-top:14px">
+      <div class="panel">
+        <h3>✅ Faktor PENYEBAB beli</h3>
+        <div class="hint">% dari calon yang jadi</div>
+        <div id="fBeli"></div>
+      </div>
+      <div class="panel">
+        <h3>🚫 Faktor PENYEBAB tidak beli</h3>
+        <div class="hint">% dari calon yang batal/hilang</div>
+        <div id="fTidak"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>📈 Tren Calon per Bulan</h3>
+      <div class="hint">jumlah masuk & yang jadi</div>
+      <canvas id="chTren" height="180"></canvas>
+    </div>
+  </main>
+</div>
+
+<button class="fab" onclick="bukaForm()">＋</button>
+
+<!-- modal -->
+<div class="modal" id="modal">
+ <div class="mbox">
+  <div class="mhead"><span id="mTitle">＋ Calon Pembeli</span><button class="mclose" onclick="tutup()">✕</button></div>
+  <div class="mbody">
+   <label>Nama</label><input id="fNama" placeholder="Nama calon">
+   <label>Nomor WhatsApp</label><input id="fWa" placeholder="08xxxxxxxxxx" inputmode="tel">
+   <label>Sumber Data</label>
+   <select id="fSumber"><option>FB Gratis</option><option>FB Ads</option><option>TikTok</option><option>Google/Maps</option><option>Rekomendasi</option><option>Langsung/Walk-in</option></select>
+   <label>Status</label>
+   <select id="fStatus"><option value="tanya">💭 Tanya-tanya</option><option value="nego">💰 Nego</option><option value="jadi">✅ Jadi Beli</option><option value="batal">✖️ Batal</option></select>
+   <label>Tanggal</label><input id="fTgl" type="date">
+<label>Produk Diminati</label><input id="fProduk" placeholder="mis. Kusen 70x180">
+   <label>Faktor PENYEBAB beli <small>(pilih semua yang cocok)</small></label>
+   <div id="fBeliChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+   <label>Faktor PENYEBAB tidak beli <small>(pilih semua yang cocok)</small></label>
+   <div id="fTidakChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+   <label>Catatan</label><textarea id="fNote" rows="2" placeholder="mis. tanya istri dulu, follow-up 3 hari"></textarea>
+   <button class="btnsave" onclick="simpan()">💾 Simpan</button>
+  </div>
+ </div>
+</div>
+
+<script>
+const SB_URL='https://gmnqwnydukiebtxhxyyd.supabase.co';
+const SB_KEY='sb_publishable_5SBOrAbFkJ01nf8FuEgpsQ_LaGFpVe9';
+const SB_TBL='leads_data';
+const KEY='crm_leads_v1';
+let leads=[];try{leads=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
+leads=leads.map(d=>d.status==='serius'?{...d,status:'nego'}:d);
+let editId=null,filter='semua',beliSel=[],tidakSel=[],charts={};
+
+const ST={tanya:{l:'💭 Tanya-tanya',c:'#93A5C8',i:'chat'},nego:{l:'💰 Nego',c:'#FFB020',i:'coins'},jadi:{l:'✅ Jadi Beli',c:'#10E08C',i:'check'},batal:{l:'✖️ Batal',c:'#FF5C73',i:'x'}};
+const FAK_BELI=['Harga murah','Bisa custom','DP fleksibel','Rekomendasi kenal','Komunikasi cepat','Kualitas sample','Locasi dekat'];
+const FAK_TIDAK=['Jauh/susah cek bahan','Butuh cepat (stok kosong)','Nawar sangat murah','Tanya keluarga dulu','Ragu kualitas/no garansi','Pilih kompetitor','Hilang/tidak follow-up'];
+
+const ICONS={
+chat:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+coins:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>',
+check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'};
+function setSync(t){document.getElementById('syncInfo').textContent=t;}
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function waLink(w){let x=(w||'').replace(/\D/g,'');if(x.startsWith('0'))x='62'+x.slice(1);return x?'https://wa.me/'+x:'';}
+
+async function cloudSave(){
+  setSync('☁️ menyimpan…');
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/'+SB_TBL+'?on_conflict=id',{method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({id:1,doc:{leads,updatedAt:Date.now()}})});
+    if(!r.ok)throw 0;
+    setSync('☁️ tersimpan '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){setSync('⚠️ simpan gagal');}
+}
+async function cloudLoad(){
+  setSync('☁️ mengambil…');
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/'+SB_TBL+'?id=eq.1&select=doc',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    if(!r.ok)throw 0;
+    const arr=await r.json();
+    if(arr.length&&arr[0].doc&&arr[0].doc.leads){leads=arr[0].doc.leads.map(d=>d.status==='serius'?{...d,status:'nego'}:d);localStorage.setItem(KEY,JSON.stringify(leads));renderAll();}
+    setSync('☁️ sinkron — '+leads.length+' calon');
+  }catch(e){setSync('⚠️ ambil gagal — cek internet');}
+}
+
+function tab(t){
+  document.getElementById('tData').classList.toggle('on',t==='data');
+  document.getElementById('tGrafik').classList.toggle('on',t==='grafik');
+  document.getElementById('sData').classList.toggle('show',t==='data');
+  document.getElementById('sGrafik').classList.toggle('show',t==='grafik');
+  if(t==='grafik')renderGrafik();
+}
+
+/* ---------- chips faktor di form ---------- */
+function chipHtml(list,selArr,box,tag){
+  document.getElementById(box).innerHTML=list.map(f=>
+    '<div class="chip'+(selArr.includes(f)?' on':'')+'" onclick="toggleF(\''+tag+'\',\''+f.replace(/'/g,"\\'")+'\')">'+f+'</div>').join('');
+}
+function toggleF(tag,f){
+  const arr=tag==='b'?beliSel:tidakSel;
+  const i=arr.indexOf(f);
+  if(i>=0)arr.splice(i,1);else arr.push(f);
+  chipHtml(FAK_BELI,beliSel,'fBeliChips','b');
+  chipHtml(FAK_TIDAK,tidakSel,'fTidakChips','t');
+}
+
+/* ---------- form ---------- */
+function bukaForm(id){
+  editId=id||null;
+  beliSel=[];tidakSel=[];
+  if(id){const d=leads.find(x=>x.id===id);
+    fNama.value=d.nama;fWa.value=d.wa;fSumber.value=d.sumber;fStatus.value=d.status;
+    fProduk.value=d.produk||'';fNote.value=d.note||'';fTgl.value=d.tgl||'';beliSel=d.beli||[];tidakSel=d.tidak||[];
+    document.getElementById('mTitle').textContent='✏️ Edit Calon';
+  }else{fNama.value='';fWa.value='';fSumber.value='FB Gratis';fStatus.value='tanya';fProduk.value='';fNote.value='';fTgl.value=new Date().toISOString().slice(0,10);
+    document.getElementById('mTitle').textContent='＋ Calon Pembeli';}
+  chipHtml(FAK_BELI,beliSel,'fBeliChips','b');
+  chipHtml(FAK_TIDAK,tidakSel,'fTidakChips','t');
+  document.getElementById('modal').classList.add('show');
+}
+function tutup(){document.getElementById('modal').classList.remove('show');}
+function simpan(){
+  if(!fNama.value.trim()){fNama.focus();return;}
+  const d={id:editId||Date.now().toString(36),nama:fNama.value.trim(),wa:fWa.value.trim(),
+    sumber:fSumber.value,status:fStatus.value,produk:fProduk.value.trim(),note:fNote.value.trim(),
+    beli:beliSel.slice(),tidak:tidakSel.slice(),
+    tgl:fTgl.value||new Date().toISOString().slice(0,10)};
+  if(editId){leads=leads.map(x=>x.id===editId?d:x);}else{leads.push(d);}
+  localStorage.setItem(KEY,JSON.stringify(leads));cloudSave();tutup();renderAll();
+}
+function hapus(id){if(confirm('Hapus calon ini?')){leads=leads.filter(x=>x.id!==id);localStorage.setItem(KEY,JSON.stringify(leads));cloudSave();renderAll();}}
+function gantiStatus(id){
+  const alur=['tanya','nego','jadi','batal'];
+  const d=leads.find(x=>x.id===id);
+  d.status=alur[(alur.indexOf(d.status)+1)%alur.length];
+  localStorage.setItem(KEY,JSON.stringify(leads));cloudSave();renderAll();
+}
+
+/* ---------- render data ---------- */
+function renderAll(){renderList();if(document.getElementById('sGrafik').classList.contains('show'))renderGrafik();}
+function renderList(){
+  const f=document.getElementById('filter');
+  f.innerHTML=['semua','tanya','nego','jadi','batal'].map(s=>
+    '<div class="chip'+(filter===s?' on':'')+'" onclick="filter=\''+s+'\';renderList()">'+(s==='semua'?'Semua':ST[s].l)+'</div>').join('');
+  let arr=filter==='semua'?leads:leads.filter(x=>x.status===filter);
+  arr=arr.slice().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||''));
+  const g=document.getElementById('list');
+  if(!arr.length){g.innerHTML='<div class="empty">Belum ada data.<br>Ketuk ＋ untuk tambah calon pembeli 📞</div>';return;}
+  g.innerHTML=arr.map(d=>{
+    const st=ST[d.status];
+    return '<div class="card" style="--sc:'+st.c+'">'+
+      '<div class="acts"><button class="mini" onclick="gantiStatus(\''+d.id+'\')" title="geser status">⇄</button>'+
+      '<button class="mini" onclick="bukaForm(\''+d.id+'\')">✏️</button>'+
+      '<button class="mini del" onclick="hapus(\''+d.id+'\')">🗑</button></div>'+
+      '<h3><span style="width:34px;height:34px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue2))">'+esc((d.nama||'?').slice(0,1).toUpperCase())+'</span>'+esc(d.nama)+'</h3>'+
+      '<span class="badge" style="background:'+st.c+'26;color:'+st.c+';border:1px solid '+st.c+'55">'+ICONS[st.i]+' '+st.l+'</span>'+
+      (d.wa?'<br><a class="wa" href="'+waLink(d.wa)+'" target="_blank">💬 '+esc(d.wa)+'</a>':'')+
+      '<div class="meta">📢 <b>'+esc(d.sumber)+'</b>'+(d.produk?' · 📦 '+esc(d.produk):'')+' · 📅 '+d.tgl+'</div>'+
+      (d.beli&&d.beli.length?'<div class="meta">✅ '+d.beli.map(esc).join(', ')+'</div>':'')+
+      (d.tidak&&d.tidak.length?'<div class="meta">🚫 '+d.tidak.map(esc).join(', ')+'</div>':'')+
+      (d.note?'<div class="note">📝 '+esc(d.note)+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+/* ---------- render grafik ---------- */
+function renderGrafik(){
+  // KPI
+  const tot=leads.length, jadi=leads.filter(x=>x.status==='jadi').length;
+  const batal=leads.filter(x=>x.status==='batal').length;
+  const aktif=leads.filter(x=>['tanya','serius','nego'].includes(x.status)).length;
+  const conv=tot?Math.round(jadi/tot*100):0;
+  const IC_K={
+us:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+ck:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>',
+lp:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+pc:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>'};
+document.getElementById('kpis').innerHTML=
+    '<div class="kpi b"><div class="ki" style="color:#8B9CFF;background:rgba(99,102,241,.15)">'+IC_K.us+'</div><div class="n">'+tot+'</div><div class="l">Total Calon</div></div>'+
+    '<div class="kpi g"><div class="ki" style="color:var(--green);background:rgba(16,224,140,.15)">'+IC_K.ck+'</div><div class="n">'+jadi+'</div><div class="l">Jadi Beli</div></div>'+
+    '<div class="kpi a"><div class="ki" style="color:var(--amber);background:rgba(255,176,32,.15)">'+IC_K.lp+'</div><div class="n">'+aktif+'</div><div class="l">Masih Proses</div></div>'+
+    '<div class="kpi p"><div class="ki" style="color:var(--cyan);background:rgba(42,212,255,.15)">'+IC_K.pc+'</div><div class="n">'+conv+'%</div><div class="l">Konversi</div></div>';
+
+  // funnel
+  const order=['tanya','nego','jadi'];
+  const cnt=order.map(s=>leads.filter(x=>x.status===s).length);
+  const cf=document.getElementById('chFunnel');
+  if(charts.f)charts.f.destroy();
+  charts.f=new Chart(cf,{type:'bar',data:{labels:order.map(s=>ST[s].l),
+    datasets:[{data:cnt,backgroundColor:['#93A5C8','#FFB020','#10E08C'],borderRadius:10}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+' calon'}}},
+    scales:{x:{grid:{color:'#26314B'},ticks:{color:'#8DA0C0',precision:0}},y:{grid:{display:false},ticks:{color:'#EAF0FA',font:{weight:700}}}}}});
+
+  // sumber
+  const srcs=[...new Set(leads.map(x=>x.sumber))];
+  const sT=srcs.map(s=>leads.filter(x=>x.sumber===s).length);
+  const sJ=srcs.map(s=>leads.filter(x=>x.sumber===s&&x.status==='jadi').length);
+  const cs=document.getElementById('chSumber');
+  if(charts.s)charts.s.destroy();
+  charts.s=new Chart(cs,{type:'bar',data:{labels:srcs,datasets:[
+      {label:'Total',data:sT,backgroundColor:'#6366F1',borderRadius:8},
+      {label:'Jadi',data:sJ,backgroundColor:'#10E08C',borderRadius:8}]},
+    options:{plugins:{legend:{labels:{color:'#8DA0C0',boxWidth:12}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#EAF0FA',font:{size:10}}},y:{grid:{color:'#26314B'},ticks:{color:'#8DA0C0',precision:0}}}}});
+
+  // faktor beli %
+  const jads=leads.filter(x=>x.status==='jadi');
+  const fb=FAK_BELI.map(f=>({f,p:jads.length?Math.round(leads.filter(x=>x.status==='jadi'&&x.beli&&x.beli.includes(f)).length/jads.length*100):0}))
+    .sort((a,b)=>b.p-a.p);
+  document.getElementById('fBeli').innerHTML=fb.map(o=>
+    '<div class="frow"><div class="fl">'+o.f+'</div><div class="fb"><i style="width:'+o.p+'%;background:linear-gradient(90deg,#10E08C,#2AD4FF)"></i></div><div class="fp">'+o.p+'%</div></div>').join('');
+
+  // faktor tidak %
+  const nolist=leads.filter(x=>x.status==='batal'||x.status==='tanya');
+  const ft=FAK_TIDAK.map(f=>({f,p:nolist.length?Math.round(leads.filter(x=>(x.status==='batal'||x.status==='tanya')&&x.tidak&&x.tidak.includes(f)).length/nolist.length*100):0}))
+    .sort((a,b)=>b.p-a.p);
+  document.getElementById('fTidak').innerHTML=ft.map(o=>
+    '<div class="frow"><div class="fl">'+o.f+'</div><div class="fb"><i style="width:'+o.p+'%;background:linear-gradient(90deg,#FF5C73,#FFB020)"></i></div><div class="fp">'+o.p+'%</div></div>').join('');
+
+  // tren bulanan
+  const months={};
+  leads.forEach(d=>{const m=(d.tgl||'').slice(0,7);if(m){months[m]=months[m]||{t:0,j:0};months[m].t++;if(d.status==='jadi')months[m].j++;}});
+  const ms=Object.keys(months).sort();
+  const ct=document.getElementById('chTren');
+  if(charts.t)charts.t.destroy();
+  charts.t=new Chart(ct,{type:'line',data:{labels:ms,datasets:[
+      {label:'Calon masuk',data:ms.map(m=>months[m].t),borderColor:'#8B9CFF',backgroundColor:'rgba(99,102,241,.18)',fill:true,tension:.4,pointRadius:4},
+      {label:'Jadi beli',data:ms.map(m=>months[m].j),borderColor:'#10E08C',backgroundColor:'rgba(16,224,140,.15)',fill:true,tension:.4,pointRadius:4}]},
+    options:{plugins:{legend:{labels:{color:'#8DA0C0',boxWidth:12}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#EAF0FA'}},y:{grid:{color:'#26314B'},ticks:{color:'#8DA0C0',precision:0},beginAtZero:true}}}});
+}
+
+renderList();
+cloudLoad();
+
+function exportXls(){
+  if(!leads.length){alert('Belum ada data.');return;}
+  const st=s=>(ST[s]||{l:s}).l;
+  const rows=leads.slice().sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||'')).map((d,i)=>[
+    i+1,d.nama,d.wa,d.sumber,st(d.status),d.produk||'',(d.beli||[]).join('; '),(d.tidak||[]).join('; '),d.note||'',d.tgl||'']);
+  const html='<table border="1"><tr>'+
+    ['No','Nama','WhatsApp','Sumber','Status','Produk Diminati','Faktor Beli','Faktor Tidak Beli','Catatan','Tanggal'].map(h=>'<th style="background:#0B1220;color:#fff;padding:6px">'+h+'</th>').join('')+'</tr>'+
+    rows.map(r=>'<tr>'+r.map(v=>'<td style="padding:5px">'+esc(String(v))+'</td>').join('')+'</tr>').join('')+'</table>';
+  const blob=new Blob(['<html><head><meta charset="UTF-8"></head><body>'+html+'</body></html>'],{type:'application/vnd.ms-excel'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='CRM_Calon_Pembeli_'+new Date().toISOString().slice(0,10)+'.xls';
+  a.click();
+}
+
+</script>
+</body>
+</html>
